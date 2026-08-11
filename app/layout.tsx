@@ -12,7 +12,7 @@ import { ThemeProvider } from "@/providers/use-theme-provider";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "pixelbridge",
+  title: "thepixelbridge",
   description: "Image Converter",
 };
 

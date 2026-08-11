@@ -10,7 +10,7 @@ export function Header() {
           className="font-space-grotesk text-2xl font-bold text-amber-800"
           href="/"
         >
-          pixel<span className="font-bold">bridge</span>
+          thepixel<span className="font-bold">bridge</span>
         </Link>
 
         <ThemeButton />

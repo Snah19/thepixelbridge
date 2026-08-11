@@ -55,7 +55,7 @@ export function ConverterPage(props: Props) {
             {from && to && `Convert ${from.toUpperCase()} To ${to.toUpperCase()}`}
           </h1>
           <p className="text-sm text-gray-500">
-            <span className="text-black dark:text-white">pixelbridge</span> is an image formats converter developed by <Link className="text-black dark:text-white underline" href="https://veasnabol.vercel.app/" target="_blank">veasna bol</Link> as a personal project. Currently it can only convert images from formats like .webp, .png, .svg, etc. to .jpg.
+            <span className="text-black dark:text-white">thepixelbridge</span> is an image formats converter developed by <Link className="text-black dark:text-white underline" href="https://veasnabol.vercel.app/" target="_blank">veasna bol</Link> as a personal project. Currently it can only convert images from formats like .webp, .png, .svg, etc. to .jpg.
           </p>
         </div>
 
