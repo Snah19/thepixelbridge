@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "components/custom/wrapper.tsxx"  ],
   "exclude": ["node_modules"]
 }
