@@ -1,4 +1,4 @@
-export const convertWebPToJpg = async (file: File, quality: number): Promise<Blob> => {
+export const convertWEBPToJPG = async (file: File): Promise<Blob> => {
   const imageBitmap = await createImageBitmap(file);
 
   const canvas = document.createElement("canvas");
@@ -25,7 +25,7 @@ export const convertWebPToJpg = async (file: File, quality: number): Promise<Blo
         resolve(blob);
       },
       "image/jpeg",
-      quality / 100,
+      1,
     );
   });
 };

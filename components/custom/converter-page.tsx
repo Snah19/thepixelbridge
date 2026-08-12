@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownToLine, Trash, X, ImageOff } from "lucide-react";
+import { ArrowDownToLine, Trash, X, ImageOff, Broom, FolderDown } from "lucide-react";
 import { FormatsPopover } from "./formats-popover";
 import { Wrapper } from "./wrapper";
 import { formats } from "@/constants/formats";
@@ -12,6 +12,8 @@ import { useImageConverter } from "@/hooks/use-image-converter";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { converterConfigs } from "@/constants/converter-configs";
+import JSZip from "jszip";
 
 interface Props {
   from?: string;
@@ -26,13 +28,16 @@ export function ConverterPage(props: Props) {
 
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
 
+  const converterConfig = from && to ? converterConfigs[`${from}-to-${to}`] : undefined;
+
   const {
     imageInfoList,
+    total,
     convert,
     update,
     remove,
     clear,
-  } = useImageConverter();
+  } = useImageConverter(converterConfig);
 
   const { isDragging, dragProps } = useDragAndDrop((files: FileList) => {
     convert(files);
@@ -55,7 +60,7 @@ export function ConverterPage(props: Props) {
             {from && to && `Convert ${from.toUpperCase()} To ${to.toUpperCase()}`}
           </h1>
           <p className="text-sm text-gray-500">
-            <span className="text-black dark:text-white">thepixelbridge</span> is an image formats converter developed by <Link className="text-black dark:text-white underline" href="https://veasnabol.vercel.app/" target="_blank">veasna bol</Link> as a personal project. Currently it can only convert images from formats like .webp, .png, .svg, etc. to .jpg.
+            <span className="text-black dark:text-white">thepixelbridge</span> is an image formats converter tool developed by <Link className="text-black dark:text-white underline" href="https://veasnabol.vercel.app/" target="_blank">veasna bol</Link> as a personal hobby project. Currently it can convert images from formats like .webp, .png, .svg, etc. to .jpg with blazing fast speed.
           </p>
         </div>
 
@@ -158,7 +163,7 @@ export function ConverterPage(props: Props) {
                 <div className="flex gap-x-1">
                   {!i.errorMessage && (
                     <Button
-                      className="p-1 ring-1 border-none rounded-none cursor-pointer hover:bg-green-700"
+                      className="p-1 ring-1 ring-black dark:ring-white border-none rounded-none cursor-pointer hover:bg-green-700 hover:text-white"
                       onClick={() => {
                         if (!i.blobURL || i.errorMessage) {
                           return;
@@ -175,7 +180,7 @@ export function ConverterPage(props: Props) {
                   )}
 
                   <Button
-                    className="p-1 ring-1 border-none rounded-none cursor-pointer hover:bg-red-700"
+                    className="p-1 ring-1 ring-black dark:ring-white border-none rounded-none cursor-pointer hover:bg-red-700 hover:text-white"
                     onClick={() => {
                       remove(i.id);
                     }}
@@ -186,6 +191,54 @@ export function ConverterPage(props: Props) {
               </li>
             ))}
           </ul>
+        )}
+
+        {total > 0 && (
+          <div className="flex justify-end gap-x-4 mt-4">
+            <Button
+              className="flex gap-x-2 px-10 ring ring-black dark:ring-white border-none rounded-none cursor-pointer hover:bg-red-700 hover:text-white"
+              onClick={() => {
+                clear();
+              }}
+            >
+              <span>
+                Clear
+              </span>
+              <Broom />
+            </Button>
+
+            <Button
+              className="flex gap-x-2 px-10 ring ring-black dark:ring-white border-none rounded-none cursor-pointer hover:bg-green-700 hover:text-white"
+              onClick={async () => {
+                const readyFiles = imageInfoList.filter((f) => f.blobData && !f.errorMessage);
+                if (!readyFiles.length) {
+                  return;
+                }
+
+                const zip = new JSZip();
+                readyFiles.forEach((f) => {
+                  zip.file(`${f.customName || "converted"}.jpg`, f.blobData!);
+                });
+
+                try {
+                  const content = await zip.generateAsync({ type: "blob" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(content);
+                  link.download = "converted-images.zip";
+                  link.click();
+                  URL.revokeObjectURL(link.href);
+                }
+                catch {
+                  throw new Error("Failed to create ZIP archive.");
+                }
+              }}
+            >
+              <span>
+                Zip({total})
+              </span>
+              <FolderDown />
+            </Button>
+          </div>
         )}
       </Wrapper>
 

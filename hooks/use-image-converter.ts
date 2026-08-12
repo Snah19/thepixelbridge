@@ -1,17 +1,20 @@
 "use client";
 
-import { convertWebPToJpg } from "@/functions/convert-webp-to-jpg";
 import { ImageInfo } from "@/types/image-info";
 import { useState } from "react";
 
-export const useImageConverter = () => {
+export type ConverterConfig = {
+  mimeType: string;
+  extension: string;
+  convert: (file: File) => Promise<Blob>;
+  invalidMessage?: string;
+};
+
+export const useImageConverter = (converterConfig?: ConverterConfig) => {
   const [imageInfoList, setImageInfoList] = useState<ImageInfo[]>([]);
-  const [quality, setQuality] = useState(85);
 
   const update = (id: string, imageInfo: Partial<ImageInfo>) => {
-    setImageInfoList((prev) => {
-      return prev.map((p) => p.id === id ? { ...p, ...imageInfo } : p);
-    });
+    setImageInfoList((prev) => prev.map((p) => (p.id === id ? { ...p, ...imageInfo } : p)));
   };
 
   const remove = (id: string) => {
@@ -20,7 +23,6 @@ export const useImageConverter = () => {
       if (target?.blobURL) {
         URL.revokeObjectURL(target.blobURL);
       }
-
       return prev.filter((p) => p.id !== id);
     });
   };
@@ -31,16 +33,19 @@ export const useImageConverter = () => {
         URL.revokeObjectURL(f.blobURL);
       }
     });
-    
     setImageInfoList([]);
   };
 
   const convert = (files: FileList | File[]) => {
+    if (!converterConfig) {
+      return;
+    }
+
     const filesList = Array.isArray(files) ? files : Array.from(files);
 
     const entries = filesList.map((f): { file: File; imageInfo: ImageInfo; isValid: boolean } => {
-      const isValid = f.type === "image/webp" || f.name.endsWith(".webp");
-      
+      const isValid = f.type === converterConfig.mimeType || f.name.endsWith(converterConfig.extension);
+
       return {
         file: f,
         isValid,
@@ -51,7 +56,9 @@ export const useImageConverter = () => {
           blobURL: "",
           blobData: null,
           isConverting: isValid,
-          errorMessage: isValid ? "" : "Not a valid .webp file.",
+          errorMessage: isValid
+            ? ""
+            : converterConfig.invalidMessage ?? `Not a valid ${converterConfig.extension} file.`,
         },
       };
     });
@@ -60,35 +67,20 @@ export const useImageConverter = () => {
 
     entries.forEach((e) => {
       if (e.isValid) {
-        convertWebPToJpg(e.file, quality)
+        converterConfig
+          .convert(e.file)
           .then((blob) => {
             const blobURL = URL.createObjectURL(blob);
-
-            setImageInfoList((prev) => prev.map((p) => {
-              if (p.id !== e.imageInfo.id) {
-                return p;
-              }
-
-              return {
-                ...p,
-                blobURL,
-                blobData: blob,
-                isConverting: false,
-              };
-            }));
+            setImageInfoList((prev) =>
+              prev.map((p) => (p.id !== e.imageInfo.id ? p : { ...p, blobURL, blobData: blob, isConverting: false })),
+            );
           })
           .catch((error: Error) => {
-            setImageInfoList((prev) => prev.map((p) => {
-              if (p.id !== e.imageInfo.id) {
-                return p;
-              }
-
-              return {
-                ...p,
-              isConverting: false,
-              errorMessage: error.message,
-              };
-            }));
+            setImageInfoList((prev) =>
+              prev.map((p) =>
+                p.id !== e.imageInfo.id ? p : { ...p, isConverting: false, errorMessage: error.message },
+              ),
+            );
           });
       }
     });
@@ -96,9 +88,7 @@ export const useImageConverter = () => {
 
   return {
     imageInfoList,
-    quality,
     total: imageInfoList.filter((f) => f.blobURL && !f.errorMessage).length,
-    setQuality,
     convert,
     update,
     remove,

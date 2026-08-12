@@ -41,6 +41,7 @@ export function FormatsPopover(props: Props) {
                     f === value && "underline",
                   )
                 }
+                disabled={align === "end" && f !== "jpg"}
                 onClick={() => {
                   setOpen(false);
                   onChange(f);
